@@ -47,6 +47,7 @@ function mapX(x: number): number {
 interface Ball {
   x: number; y: number; radius: number;
   speed: number; active: boolean; curve: number; hasSwung: boolean;
+  bounceX: number;
 }
 
 interface GameState {
@@ -96,6 +97,49 @@ function HitZone({ gameStateRef }: { gameStateRef: React.MutableRefObject<GameSt
       <planeGeometry args={[2.4, zEnd - zStart]} />
       <meshBasicMaterial color="#F5A623" transparent opacity={0.12} depthWrite={false} />
     </mesh>
+  );
+}
+
+// ── Bounce Spot (shows where ball will land) ─────────────
+function BounceSpot({ ballRef, gameStateRef }: { ballRef: React.MutableRefObject<Ball>; gameStateRef: React.MutableRefObject<GameState> }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }) => {
+    if (!meshRef.current || !ringRef.current) return;
+    const ball = ballRef.current;
+    const gs = gameStateRef.current;
+    const visible = ball.active && gs.gameStarted && !gs.isGameOver;
+    meshRef.current.visible = visible;
+    ringRef.current.visible = visible;
+    if (!visible) return;
+
+    // Bounce happens at ~55% progress → ballY ~340
+    const bounceZ = mapBallZ(340);
+    const bounceX = mapX(ball.bounceX);
+
+    meshRef.current.position.set(bounceX, 0.012, bounceZ);
+    ringRef.current.position.set(bounceX, 0.013, bounceZ);
+
+    // Pulsing animation — strong and visible
+    const pulse = 0.85 + 0.3 * Math.sin(clock.elapsedTime * 5);
+    ringRef.current.scale.setScalar(pulse);
+    (meshRef.current.material as THREE.MeshBasicMaterial).opacity = 0.7 + 0.2 * Math.sin(clock.elapsedTime * 5);
+  });
+
+  return (
+    <>
+      {/* Inner filled circle — bright and large */}
+      <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.18, 32]} />
+        <meshBasicMaterial color="#ffcc00" transparent opacity={0.75} depthWrite={false} />
+      </mesh>
+      {/* Outer pulsing ring */}
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.2, 0.28, 32]} />
+        <meshBasicMaterial color="#ff6600" transparent opacity={0.6} depthWrite={false} />
+      </mesh>
+    </>
   );
 }
 
@@ -480,6 +524,9 @@ function SceneContent(props: SceneProps) {
 
       {/* Hit zone */}
       <HitZone gameStateRef={props.gameStateRef} />
+
+      {/* Bounce spot - shows where ball will land */}
+      <BounceSpot ballRef={props.ballRef} gameStateRef={props.gameStateRef} />
 
       {/* Wickets */}
       {/* Bowler's end — aligned with far crease */}

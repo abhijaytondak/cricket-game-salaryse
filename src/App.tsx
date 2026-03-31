@@ -19,7 +19,7 @@ const WICKET_END_DELAY = 1000;
 const SWING_DURATION = 200;
 const BAT_MIN_X = 140;
 const BAT_MAX_X = 260;
-const BAT_HIT_RANGE = 45;
+const BAT_HIT_RANGE = 15;
 const STUMP_HIT_RANGE = 15;
 const BALL_MIN_X = 165;
 const BALL_MAX_X = 235;
@@ -33,8 +33,10 @@ interface DeliveryConfig {
 }
 
 function pickDelivery(ballNumber: number): DeliveryConfig {
-  // Exactly 1 ball per over on stumps — always the 4th ball (index 3)
-  const onStumps = (ballNumber === 3);
+  // 3 balls are easy sixer deliveries (balls 0, 2, 4 — 1st, 3rd, 5th)
+  const isSixerBall = (ballNumber === 0 || ballNumber === 2 || ballNumber === 4);
+  // Last ball targets stumps
+  const onStumps = (ballNumber === 5);
 
   const pool: { type: DeliveryType; weight: number }[] = [
     { type: 'pace', weight: 20 },
@@ -53,15 +55,22 @@ function pickDelivery(ballNumber: number): DeliveryConfig {
 
   let d: DeliveryConfig;
   switch (chosen) {
-    case 'pace': d = { speed: 6.0 + Math.random() * 2.0, curve: (Math.random() - 0.5) * 0.4, startX: 190 + Math.random() * 20, label: 'Pace' }; break;
-    case 'yorker': d = { speed: 7.0 + Math.random() * 2.0, curve: (Math.random() - 0.5) * 0.15, startX: 193 + Math.random() * 14, label: 'Yorker' }; break;
-    case 'bouncer': d = { speed: 6.5 + Math.random() * 2.0, curve: (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.2), startX: 190 + Math.random() * 20, label: 'Bouncer' }; break;
-    case 'offbreak': d = { speed: 4.5 + Math.random() * 1.0, curve: 0.35 + Math.random() * 0.25, startX: 185 + Math.random() * 15, label: 'Off Break' }; break;
-    case 'legbreak': d = { speed: 4.5 + Math.random() * 1.0, curve: -(0.35 + Math.random() * 0.25), startX: 200 + Math.random() * 15, label: 'Leg Break' }; break;
-    case 'slower': d = { speed: 3.5 + Math.random() * 1.0, curve: (Math.random() - 0.5) * 0.3, startX: 190 + Math.random() * 20, label: 'Slower Ball' }; break;
-    case 'inswingh': d = { speed: 5.8 + Math.random() * 1.5, curve: 0.25 + Math.random() * 0.2, startX: 185 + Math.random() * 12, label: 'Inswinger' }; break;
-    case 'outswingh': d = { speed: 5.8 + Math.random() * 1.5, curve: -(0.25 + Math.random() * 0.2), startX: 200 + Math.random() * 12, label: 'Outswinger' }; break;
+    case 'pace': d = { speed: 4.5 + Math.random() * 1.5, curve: (Math.random() - 0.5) * 0.4, startX: 190 + Math.random() * 20, label: 'Pace' }; break;
+    case 'yorker': d = { speed: 5.0 + Math.random() * 1.5, curve: (Math.random() - 0.5) * 0.15, startX: 193 + Math.random() * 14, label: 'Yorker' }; break;
+    case 'bouncer': d = { speed: 4.8 + Math.random() * 1.5, curve: (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.2), startX: 190 + Math.random() * 20, label: 'Bouncer' }; break;
+    case 'offbreak': d = { speed: 3.5 + Math.random() * 1.0, curve: 0.35 + Math.random() * 0.25, startX: 185 + Math.random() * 15, label: 'Off Break' }; break;
+    case 'legbreak': d = { speed: 3.5 + Math.random() * 1.0, curve: -(0.35 + Math.random() * 0.25), startX: 200 + Math.random() * 15, label: 'Leg Break' }; break;
+    case 'slower': d = { speed: 3.0 + Math.random() * 1.0, curve: (Math.random() - 0.5) * 0.3, startX: 190 + Math.random() * 20, label: 'Slower Ball' }; break;
+    case 'inswingh': d = { speed: 4.2 + Math.random() * 1.2, curve: 0.25 + Math.random() * 0.2, startX: 185 + Math.random() * 12, label: 'Inswinger' }; break;
+    case 'outswingh': d = { speed: 4.2 + Math.random() * 1.2, curve: -(0.25 + Math.random() * 0.2), startX: 200 + Math.random() * 12, label: 'Outswinger' }; break;
     default: d = { speed: 6.0 + Math.random() * 1.5, curve: (Math.random() - 0.5) * 0.35, startX: 190 + Math.random() * 20, label: 'Pace' }; break;
+  }
+
+  if (isSixerBall) {
+    // Easy sixer: slow, straight, right in the sweet spot
+    d.startX = 198 + Math.random() * 4; // dead center
+    d.curve = (Math.random() - 0.5) * 0.04; // barely moves
+    d.speed = 3.0 + Math.random() * 0.8; // slow but not too slow
   }
 
   if (onStumps) {
@@ -81,6 +90,7 @@ interface Ball {
   x: number; y: number; radius: number;
   speed: number; active: boolean; curve: number; hasSwung: boolean;
   processed: boolean; // #3.2: guard against double-fire
+  bounceX: number; // x position where ball will bounce on the pitch
 }
 
 // Cricket shot types for realistic bat swing animations
@@ -200,7 +210,7 @@ export default function App() {
   const highScoreRef = useRef(highScore); // #3.5: ref for highScore
 
   // Refs shared with 3D scene
-  const ballRef = useRef<Ball>({ x: 200, y: 50, radius: 6, speed: 0, active: false, curve: 0, hasSwung: false, processed: false });
+  const ballRef = useRef<Ball>({ x: 200, y: 50, radius: 6, speed: 0, active: false, curve: 0, hasSwung: false, processed: false, bounceX: 200 });
   const gameStateRef = useRef<GameState>({
     score: 0, ballsPlayed: 0, isGameOver: false, gameStarted: false,
     batX: 200, targetBatX: 200, isSwinging: false, isMuted: false, activePointerId: null, shotType: 'straight' as ShotType,
@@ -312,10 +322,14 @@ export default function App() {
       (window as any).CricketGameChannel.postMessage(JSON.stringify({ type: 'GAME_START' }));
     }
     const delivery = pickDelivery(gameStateRef.current.ballsPlayed);
+    // Estimate bounce X: bounce happens around ballY ~340 (55% progress)
+    // frames to bounce ≈ (340 - 50) / speed, lateral drift = frames * curve
+    const framesToBounce = (340 - 50) / delivery.speed;
+    const bounceX = Math.max(BALL_MIN_X, Math.min(BALL_MAX_X, delivery.startX + delivery.curve * framesToBounce));
     ballRef.current = {
       active: true, y: 50, x: delivery.startX,
       speed: delivery.speed, curve: delivery.curve,
-      radius: 6, hasSwung: false, processed: false,
+      radius: 6, hasSwung: false, processed: false, bounceX,
     };
     // Don't clear message here — let the popup timer handle it naturally
   }, []);
@@ -360,23 +374,11 @@ export default function App() {
     const horizontalDist = Math.abs(ball.x - gs.batX);
 
     if (inHitZone && horizontalDist < BAT_HIT_RANGE) {
-      const distFromCenter = Math.abs(ball.y - HIT_ZONE_CENTER);
-      let points = 0, msg = '', color = '#fff';
+      let points = 6, msg = 'SIX!', color = '#FFD700';
 
-      // Scoring: closer to center = more runs, horizontal alignment gives bonus
-      if (distFromCenter < 10) {
-        points = 6; msg = 'SIX!'; color = '#FFD700';
-        playSound('batHit', 1.0); playSound('bigCheer', 1.0); triggerCelebration('six');
-        try { navigator.vibrate?.([100, 50, 200, 50, 150]); } catch {}
-      }
-      else if (distFromCenter < 22) {
-        points = 4; msg = 'FOUR!'; color = '#4ADE80';
-        playSound('batHit', 1.0); playSound('cheer', 1.0); triggerCelebration('four');
-        try { navigator.vibrate?.([80, 40, 120]); } catch {}
-      }
-      else if (distFromCenter < 45) { points = 3; msg = '+3'; color = '#38BDF8'; playSound('batHit', 0.8); playSound('cheer', 0.5); }
-      else if (distFromCenter < 55) { points = 2; msg = '+2'; color = '#38BDF8'; playSound('batHit', 0.7); playSound('cheer', 0.5); }
-      else { points = 1; msg = '+1'; color = '#9CA3AF'; playSound('batHit', 0.6); playSound('cheer', 0.5); }
+      // Every hit is a guaranteed six
+      playSound('batHit', 1.0); playSound('bigCheer', 1.0); triggerCelebration('six');
+      try { navigator.vibrate?.([100, 50, 200, 50, 150]); } catch {}
 
       // Pick a realistic shot animation based on runs scored
       gs.shotType = pickShot(points);
@@ -456,10 +458,13 @@ export default function App() {
         const smoothFactor = 1 - Math.pow(0.65, dtFactor);
         gs.batX += (gs.targetBatX - gs.batX) * smoothFactor;
 
-        // Wicket check — if ball hits stumps and player didn't swing, always out
-        // Bat position doesn't matter — you must swing to defend
+        // Wicket check — ball on stumps
         if (ball.y > 540 && !ball.hasSwung) {
-          if (Math.abs(ball.x - 200) < STUMP_HIT_RANGE) {
+          const onStumps = Math.abs(ball.x - 200) < STUMP_HIT_RANGE;
+          // If bat hasn't moved from default position (200) and ball is on stumps = auto out
+          const batNotMoved = Math.abs(gs.batX - 200) < 5;
+          if (onStumps && (batNotMoved || Math.random() < 0.05)) {
+            // Auto-out if bat not moved, or 5% chance even if moved
             showMessageRef.current('BOWLED!', '#EF4444');
             playSoundRef.current('wicket', 0.9);
             ball.active = false; ball.processed = true;
