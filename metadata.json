@@ -1,0 +1,5 @@
+{
+  "name": "Cricket Game",
+  "description": "A fast-paced mobile cricket game. Hit the ball in the blue zone for maximum runs and climb the leaderboard!",
+  "requestFramePermissions": []
+}

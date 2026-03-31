@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "JetBrains Mono", ui-monospace, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-gold: #F5A623;
+  --color-gold-bright: #FFD700;
+  --color-sky: #38BDF8;
+  --color-green-boundary: #4ADE80;
+  --color-red-wicket: #EF4444;
+}
+
+/* ── Mobile optimizations ────────────────────────── */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* Prevent pull-to-refresh and rubber banding */
+html, body {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+#root {
+  overflow: auto;
+  height: 100%;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent image drag/selection globally in game */
+img {
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0;
+}
+
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* ── Flash overlays ─────────────────────────────────── */
+@keyframes flash-gold {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.six-flash {
+  position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  background: radial-gradient(circle at 50% 55%, rgba(255,215,0,0.35) 0%, rgba(255,215,0,0) 70%);
+  animation: flash-gold 650ms ease-out forwards;
+}
+
+@keyframes border-pulse-green {
+  0%   { opacity: 0; border-width: 4px; }
+  20%  { opacity: 1; }
+  100% { opacity: 0; border-width: 1px; }
+}
+.four-flash {
+  position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  border: 4px solid #4ADE80; border-radius: 16px;
+  animation: border-pulse-green 550ms ease-out forwards;
+}
+
+@keyframes wicket-pulse {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  30%  { opacity: 0.4; }
+  50%  { opacity: 0.7; }
+  100% { opacity: 0; }
+}
+.wicket-flash {
+  position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  background: rgba(239, 68, 68, 0.4);
+  animation: wicket-pulse 750ms ease-out forwards;
+}
+
+/* ── Button glow ────────────────────────────────────── */
+@keyframes glow-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(61,69,195,0.45); }
+  70%  { box-shadow: 0 0 0 12px rgba(61,69,195,0); }
+  100% { box-shadow: 0 0 0 0 rgba(61,69,195,0); }
+}
+.btn-glow { animation: glow-ring 2s ease-out infinite; }
+
+/* ── Screen shake ───────────────────────────────────── */
+@keyframes shake-heavy {
+  0%   { transform: translate(0,0); }
+  12%  { transform: translate(-7px,4px); }
+  25%  { transform: translate(6px,-5px); }
+  40%  { transform: translate(-4px,7px); }
+  55%  { transform: translate(5px,-3px); }
+  70%  { transform: translate(-2px,3px); }
+  100% { transform: translate(0,0); }
+}
+@keyframes shake-wicket {
+  0%   { transform: translate(0,0); }
+  8%   { transform: translate(-12px,6px); }
+  18%  { transform: translate(10px,-8px); }
+  30%  { transform: translate(-6px,10px); }
+  45%  { transform: translate(8px,-4px); }
+  60%  { transform: translate(-4px,6px); }
+  75%  { transform: translate(3px,-3px); }
+  100% { transform: translate(0,0); }
+}
+.shake-six    { animation: shake-heavy 420ms ease-out; }
+.shake-wicket { animation: shake-wicket 520ms ease-out; }
+
+/* ── Ball tracker glow ──────────────────────────────── */
+@keyframes tracker-glow {
+  0%, 100% { box-shadow: 0 0 6px rgba(255,215,0,0.5); }
+  50%      { box-shadow: 0 0 14px rgba(255,215,0,0.9); }
+}
+.tracker-six-glow { animation: tracker-glow 600ms ease-in-out 2; }
+
+/* ── Banner plane flyover ───────────────────────── */
+@keyframes fly-across {
+  0%   { transform: translateX(110%) translateY(0); }
+  40%  { transform: translateX(10%) translateY(-6px); }
+  60%  { transform: translateX(-10%) translateY(4px); }
+  100% { transform: translateX(-110%) translateY(0); }
+}
+
+@keyframes wave-banner {
+  0%   { transform: rotate(-1deg) scaleY(1); }
+  25%  { transform: rotate(0.5deg) scaleY(1.02); }
+  50%  { transform: rotate(-0.8deg) scaleY(0.98); }
+  75%  { transform: rotate(1deg) scaleY(1.01); }
+  100% { transform: rotate(-1deg) scaleY(1); }
+}
+
+.banner-flyover {
+  position: absolute;
+  top: 5%;
+  left: 0;
+  width: 100%;
+  z-index: 2;
+  pointer-events: none;
+  animation: fly-across 15s linear forwards;
+}
+
+.banner-flyover img {
+  width: 75%;
+  max-width: 340px;
+  height: auto;
+  animation: wave-banner 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5));
+}

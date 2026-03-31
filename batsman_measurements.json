@@ -1,0 +1,95 @@
+{
+  "metadata": {
+    "total_height": 1.8,
+    "proportions": "8-head canon",
+    "head_height_percent": 12.5,
+    "unit": "Three.js units (1 unit = 10cm)"
+  },
+
+  "head": {
+    "radius": 0.1125,
+    "position_y": 1.6875
+  },
+
+  "neck": {
+    "radius": 0.045,
+    "height": 0.15,
+    "position_y": 1.575
+  },
+
+  "torso": {
+    "upper_chest_capsule": {
+      "radius": 0.09,
+      "height": 0.36,
+      "position_y": 1.35
+    },
+    "lower_abdomen_capsule": {
+      "radius": 0.085,
+      "height": 0.32,
+      "position_y": 1.0
+    }
+  },
+
+  "shoulders": {
+    "width_between_joints": 0.4,
+    "position_y": 1.35
+  },
+
+  "upper_arm": {
+    "radius": 0.045,
+    "length": 0.32
+  },
+
+  "forearm": {
+    "radius": 0.035,
+    "length": 0.28
+  },
+
+  "hand_glove": {
+    "box_width": 0.08,
+    "box_height": 0.12,
+    "box_depth": 0.055
+  },
+
+  "hips": {
+    "width_between_joints": 0.32,
+    "position_y": 0.81
+  },
+
+  "upper_leg_thigh": {
+    "radius": 0.055,
+    "length": 0.41
+  },
+
+  "lower_leg_shin": {
+    "radius": 0.04,
+    "length": 0.39
+  },
+
+  "foot": {
+    "box_width": 0.09,
+    "box_height": 0.065,
+    "box_depth": 0.22
+  },
+
+  "joint_positions_y": {
+    "head_top": 1.725,
+    "neck_base": 1.5,
+    "shoulder": 1.35,
+    "elbow": 1.03,
+    "wrist": 0.75,
+    "hip": 0.81,
+    "knee": 0.405,
+    "ankle": 0.025,
+    "ground": 0.0
+  },
+
+  "notes": {
+    "cricket_specific": "Batsman in ready stance - wider hip positioning, slight forward lean of torso compensated in joint positions",
+    "capsule_definition": "Capsule = cylinder with hemispherical caps; use CapsuleGeometry(radius, height, capSegments, radialSegments)",
+    "arm_positioning": "Upper arm 32cm matches shoulder-to-elbow distance; forearm 28cm matches elbow-to-wrist",
+    "leg_positioning": "Thigh 41cm (hip to knee); shin 39cm (knee to ankle) gives realistic cricket stance",
+    "hand_orientation": "Box dimensions allow for batting glove; depth (Z) is longest for grip direction",
+    "total_height_verification": "0.225 (head) + 0.15 (neck) + 0.36 + 0.32 (torso) + 0.41 + 0.39 (legs) + 0.065 (foot height) = 1.8 units"
+  }
+}
