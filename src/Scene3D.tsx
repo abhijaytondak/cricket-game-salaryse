@@ -99,6 +99,47 @@ function HitZone({ gameStateRef }: { gameStateRef: React.MutableRefObject<GameSt
   );
 }
 
+// ── Bounce Spot Indicator ─────────────────────────────────
+function BounceSpot({ ballRef, gameStateRef }: { ballRef: React.MutableRefObject<Ball>; gameStateRef: React.MutableRefObject<GameState> }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }) => {
+    if (!meshRef.current || !ringRef.current) return;
+    const ball = ballRef.current;
+    const gs = gameStateRef.current;
+    const visible = ball.active && gs.gameStarted && !gs.isGameOver;
+    meshRef.current.visible = visible;
+    ringRef.current.visible = visible;
+    if (!visible) return;
+
+    // Bounce happens at progress ~0.55 (ballY ~340)
+    const bounceX = mapX(ball.x + ball.curve * 30);
+    const bounceZ = mapBallZ(340);
+    meshRef.current.position.set(bounceX, 0.012, bounceZ);
+    ringRef.current.position.set(bounceX, 0.011, bounceZ);
+
+    const pulse = 0.7 + 0.3 * Math.sin(clock.elapsedTime * 6);
+    (meshRef.current.material as THREE.MeshBasicMaterial).opacity = 0.35 * pulse;
+    const ringScale = 1 + 0.3 * Math.sin(clock.elapsedTime * 4);
+    ringRef.current.scale.set(ringScale, ringScale, ringScale);
+    (ringRef.current.material as THREE.MeshBasicMaterial).opacity = 0.2 * pulse;
+  });
+
+  return (
+    <>
+      <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.15, 24]} />
+        <meshBasicMaterial color="#FFA500" transparent opacity={0.35} depthWrite={false} />
+      </mesh>
+      <mesh ref={ringRef} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.18, 0.25, 24]} />
+        <meshBasicMaterial color="#FFD700" transparent opacity={0.2} depthWrite={false} />
+      </mesh>
+    </>
+  );
+}
+
 // ── Wickets ───────────────────────────────────────────────
 function Wickets({ position }: { position: [number, number, number] }) {
   const stumpMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#e8dcc8', roughness: 0.5, metalness: 0.05 }), []);
@@ -480,6 +521,9 @@ function SceneContent(props: SceneProps) {
 
       {/* Hit zone */}
       <HitZone gameStateRef={props.gameStateRef} />
+
+      {/* Bounce spot indicator */}
+      <BounceSpot ballRef={props.ballRef} gameStateRef={props.gameStateRef} />
 
       {/* Wickets */}
       {/* Bowler's end — aligned with far crease */}
