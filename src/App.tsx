@@ -374,13 +374,19 @@ export default function App() {
     const horizontalDist = Math.abs(ball.x - gs.batX);
 
     if (inHitZone && horizontalDist < BAT_HIT_RANGE) {
-      let points = 6, msg = 'SIX!', color = '#FFD700';
+      // 70% chance of six, 30% chance of four — every hit is a boundary
+      const roll = Math.random();
+      let points: number, msg: string, color: string;
+      if (roll < 0.7) {
+        points = 6; msg = 'SIX!'; color = '#FFD700';
+        playSound('batHit', 1.0); playSound('bigCheer', 1.0); triggerCelebration('six');
+        try { navigator.vibrate?.([100, 50, 200, 50, 150]); } catch {}
+      } else {
+        points = 4; msg = 'FOUR!'; color = '#4ADE80';
+        playSound('batHit', 1.0); playSound('cheer', 1.0); triggerCelebration('four');
+        try { navigator.vibrate?.([80, 40, 120]); } catch {}
+      }
 
-      // Every hit is a guaranteed six
-      playSound('batHit', 1.0); playSound('bigCheer', 1.0); triggerCelebration('six');
-      try { navigator.vibrate?.([100, 50, 200, 50, 150]); } catch {}
-
-      // Pick a realistic shot animation based on runs scored
       gs.shotType = pickShot(points);
 
       setScore(s => s + points); gs.score += points;
