@@ -655,7 +655,7 @@ export default function App() {
           onDragStart={(e) => e.preventDefault()}
           onTouchStart={(e) => { if (gameStarted && !isGameOver) e.preventDefault(); }}
         >
-          <img src="/stadium-bg.png" alt="" className="absolute inset-0 w-full h-full object-cover select-none" style={{ zIndex: 0, pointerEvents: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }} draggable={false} />
+          <img src="/stadium-bg.jpg" alt="" className="absolute inset-0 w-full h-full object-cover select-none" fetchPriority="high" loading="eager" decoding="async" style={{ zIndex: 0, pointerEvents: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }} draggable={false} />
 
           <GameScene
             ballRef={ballRef}
