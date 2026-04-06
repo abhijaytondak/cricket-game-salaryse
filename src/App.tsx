@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react';
 import { Trophy, RotateCcw, Play, Home, Volume2, VolumeX, MoveHorizontal, MousePointerClick } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react';
-import { GameScene } from './Scene3D';
+
+const GameScene = lazy(() => import('./Scene3D').then(m => ({ default: m.GameScene })));
 
 // ── Constants ──────────────────────────────────────────────
 const HIT_ZONE_START = 430;
@@ -379,12 +380,12 @@ export default function App() {
       let points: number, msg: string, color: string;
       if (roll < 0.7) {
         points = 6; msg = 'SIX!'; color = '#FFD700';
-        playSound('batHit', 1.0); playSound('bigCheer', 1.0); triggerCelebration('six');
-        try { navigator.vibrate?.([100, 50, 200, 50, 150]); } catch {}
+        triggerCelebration('six');
+        setTimeout(() => { playSound('batHit', 1.0); playSound('bigCheer', 1.0); try { navigator.vibrate?.([100, 50, 200, 50, 150]); } catch {} }, 0);
       } else {
         points = 4; msg = 'FOUR!'; color = '#4ADE80';
-        playSound('batHit', 1.0); playSound('cheer', 1.0); triggerCelebration('four');
-        try { navigator.vibrate?.([80, 40, 120]); } catch {}
+        triggerCelebration('four');
+        setTimeout(() => { playSound('batHit', 1.0); playSound('cheer', 1.0); try { navigator.vibrate?.([80, 40, 120]); } catch {} }, 0);
       }
 
       gs.shotType = pickShot(points);
@@ -395,14 +396,14 @@ export default function App() {
       nextBall();
     } else if (inHitZone) {
       gs.shotType = pickShot(0);
-      playSound('batHit', 0.4);
+      setTimeout(() => playSound('batHit', 0.4), 0);
       showMessage('MISS', '#EF4444');
       setBallResults(prev => [...prev, { runs: 0, isWicket: false }]);
       nextBall();
     } else {
       // Swing outside the zone — record dot and advance immediately
       gs.shotType = 'defend';
-      playSound('batHit', 0.3);
+      setTimeout(() => playSound('batHit', 0.3), 0);
       showMessage('MISS', '#F59E0B');
       setBallResults(prev => [...prev, { runs: 0, isWicket: false }]);
       nextBall();
@@ -657,13 +658,15 @@ export default function App() {
         >
           <img src="/stadium-bg.jpg" alt="" className="absolute inset-0 w-full h-full object-cover select-none" fetchPriority="high" loading="eager" decoding="async" style={{ zIndex: 0, pointerEvents: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }} draggable={false} />
 
-          <GameScene
-            ballRef={ballRef}
-            gameStateRef={gameStateRef}
-            crowdEnergyRef={crowdEnergyRef}
-            celebrationTypeRef={celebrationTypeRef}
-            shakeActiveRef={shakeActiveRef}
-          />
+          <Suspense fallback={null}>
+            <GameScene
+              ballRef={ballRef}
+              gameStateRef={gameStateRef}
+              crowdEnergyRef={crowdEnergyRef}
+              celebrationTypeRef={celebrationTypeRef}
+              shakeActiveRef={shakeActiveRef}
+            />
+          </Suspense>
 
           {/* ── Score Popup ───────────────────────────────── */}
           <AnimatePresence mode="wait">
