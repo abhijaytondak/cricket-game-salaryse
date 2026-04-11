@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react';
 import { Trophy, RotateCcw, Play, Home, Volume2, VolumeX, MoveHorizontal, MousePointerClick } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react';
-import { AntiBotGuard } from './antiBot';
+
 
 const GameScene = lazy(() => import('./Scene3D').then(m => ({ default: m.GameScene })));
 
@@ -223,12 +223,6 @@ export default function App() {
   // #1.2: Shared keyboard state read by main loop (no separate rAF)
   const keysDownRef = useRef(new Set<string>());
 
-  // ── Anti-bot guard ────────────────────────────────────────
-  const antiBotRef = useRef(new AntiBotGuard());
-  useEffect(() => {
-    antiBotRef.current.init();
-    return () => antiBotRef.current.destroy();
-  }, []);
 
   // #3.5: Keep highScoreRef in sync
   useEffect(() => { highScoreRef.current = highScore; }, [highScore]);
@@ -315,20 +309,9 @@ export default function App() {
   }, [managedTimeout]);
 
   // ── Game Logic (all ref mutations inline, no async sync) ──
-  const [botDetected, setBotDetected] = useState(false);
-
   const endGame = useCallback(() => {
     setIsGameOver(true);
     gameStateRef.current.isGameOver = true; // #3.1: sync inline
-
-    // ── Anti-bot check at game end ──────────────────────────
-    const isBot = antiBotRef.current.isBot();
-    if (isBot) {
-      setBotDetected(true);
-      // Don't save score or report to Flutter — invalidated
-      return;
-    }
-
     const fs = gameStateRef.current.score;
     const hs = highScoreRef.current; // #3.5: read from ref
     if (fs >= hs && fs > 0) { setHighScore(fs); safeSetItem('cricketHighScore', fs.toString()); }
@@ -431,8 +414,6 @@ export default function App() {
 
   const restartGame = useCallback(() => {
     clearAllTimeouts();
-    setBotDetected(false);
-    antiBotRef.current.reset();
     setScore(0); setBallsPlayed(0); setIsGameOver(false); setGameStarted(true);
     setMessage({ text: '', color: '', id: 0 }); setBallResults([]);
     celebrationTypeRef.current = null; shakeActiveRef.current = false; crowdEnergyRef.current = 0;
@@ -768,15 +749,6 @@ export default function App() {
                 <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } }}>
                   <button onClick={(e) => {
                     e.stopPropagation();
-                    // Block automation tools immediately
-                    if (antiBotRef.current.isBot()) {
-                      setBotDetected(true);
-                      setGameStarted(true);
-                      setIsGameOver(true);
-                      gameStateRef.current.gameStarted = true;
-                      gameStateRef.current.isGameOver = true;
-                      return;
-                    }
                     setGameStarted(true);
                     gameStateRef.current.gameStarted = true;
                     initBall();
@@ -802,17 +774,7 @@ export default function App() {
               className="absolute inset-0 flex flex-col items-center justify-center p-5 text-center z-30"
               style={{ background: 'rgba(2,4,15,0.96)', backdropFilter: 'blur(16px)' }}>
               <div className="w-full max-w-[340px]">
-                {botDetected ? (
-                <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 20 }} className="mb-6">
-                  <div className="text-[40px] mb-2">🚫</div>
-                  <div className="text-[18px] font-bold text-red-400 mb-2">Bot Detected</div>
-                  <p className="text-[13px] text-white/60 leading-relaxed">
-                    Unusual activity was detected. Your score was not recorded. Play on a real device to submit scores.
-                  </p>
-                </motion.div>
-              ) : (<>
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                   className="text-[12px] font-bold tracking-[0.1em] uppercase mb-2" style={{ color: banner.color }}>
                   {banner.text}
                 </motion.div>
@@ -821,8 +783,7 @@ export default function App() {
                   <CountUpScore target={score} />
                   <div className="text-[13px] font-medium tracking-[0.08em] uppercase" style={{ color: '#c0c8d8' }}>Runs</div>
                 </motion.div>
-              </>)}
-                {!botDetected && score >= highScore && score > 0 && (
+                {score >= highScore && score > 0 && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, scale: [1, 1.1, 1] }}
                     transition={{ delay: 0.8, duration: 1.5, repeat: Infinity }}
                     className="text-[12px] font-bold flex items-center justify-center gap-1.5 uppercase tracking-[0.08em] mb-4"
@@ -848,7 +809,6 @@ export default function App() {
                   {!(window as any).CricketGameChannel && (
                     <button onClick={(e) => {
                       e.stopPropagation(); clearAllTimeouts();
-                      setBotDetected(false); antiBotRef.current.reset();
                       // Full reset — same as restartGame but go to start screen
                       setScore(0); setBallsPlayed(0); setIsGameOver(false); setGameStarted(false);
                       setMessage({ text: '', color: '', id: 0 }); setBallResults([]);
