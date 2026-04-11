@@ -553,16 +553,13 @@ export default function App() {
     e.currentTarget.setPointerCapture(e.pointerId);
     pointerStartPos.current = { x: e.clientX, y: e.clientY };
     isDragging.current = false;
-    antiBotRef.current.touchAnalyzer.recordTouch(e);
     // Don't swing on pointerDown — wait for pointerUp to distinguish tap from drag
   }, [handleInput]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     if (gameStateRef.current.activePointerId === e.pointerId) {
-      antiBotRef.current.touchAnalyzer.recordTouch(e);
       // Only swing if this was a tap (not a drag)
       if (!isDragging.current) {
-        antiBotRef.current.touchAnalyzer.recordTap();
         handleInput();
       }
       gameStateRef.current.activePointerId = null;
